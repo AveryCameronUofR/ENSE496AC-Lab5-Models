@@ -249,6 +249,22 @@ class LanguageIDModel(object):
 
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        """
+        tried 50 50 50, batch 3, lr 0.05 obtained: 70% fail
+        tried 200 200 200 batch 3 lr 0.05 obtained: inf fail
+        tried 200 200 200 batch 3 lr 0.001 obtained ~80%
+        tried 200 200 200 batch 3 lr 0.005 obtained ~82%
+        tried 200 200 200 batch 5 lr 0.005 obtained 81
+        tried 300 300 300 batch 5 lr 0.01 obtained 82
+        tried 400 400 400 batch 5 lr 0.05 jumped around
+        tried 400 400 400 batch 5 lr 0.03 obtained ~ 77
+        tried 300 300 300 batch 2 lr 0.01 obtained 77 
+        """
+        self.w_initial = nn.Parameter(self.num_chars, 200)
+        self.w_hidden = nn.Parameter(200,200)
+        self.w_final = nn.Parameter(200, len(self.languages))
+        self.batch_size = 2
+        self.learning_rate = -0.0025
 
     def run(self, xs):
         """
@@ -280,6 +296,16 @@ class LanguageIDModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
+        z = None
+        for x in xs:
+            if (z == None):
+                z = nn.Linear(x, self.w_initial)
+            else:
+                #z = nn.Add(nn.Linear(x, W), nn.Linear(h,W_hidden)) 
+                #h is the former z
+                z = nn.Add(nn.Linear(x, self.w_initial), nn.Linear(z,self.w_hidden))
+        z = nn.Linear(z, self.w_final)
+        return z
 
     def get_loss(self, xs, y):
         """
@@ -296,9 +322,20 @@ class LanguageIDModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        y_pred = self.run(xs)
+        return nn.SoftmaxLoss(y_pred,y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        while True:
+            for x, y in dataset.iterate_once(self.batch_size):
+                loss = self.get_loss(x, y)
+                grad_wrt_wi, grad_wrt_wh, grad_wrt_wf = nn.gradients(loss, [self.w_initial, self.w_hidden, self.w_final])
+                self.w_initial.update(grad_wrt_wi, self.learning_rate)
+                self.w_hidden.update(grad_wrt_wh, self.learning_rate)
+                self.w_final.update(grad_wrt_wf, self.learning_rate)
+            if (dataset.get_validation_accuracy() > 0.86):
+                return
