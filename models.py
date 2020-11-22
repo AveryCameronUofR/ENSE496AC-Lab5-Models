@@ -158,6 +158,20 @@ class DigitClassificationModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        """
+        10 batchsize 2, learning rate 0.015 slowly trained to 92% in 4 epochs
+        50 batchsize 2, learning rate 0.025 trained to ~95-96% in 2 epochs
+        250 batchsize 5, learning rate 0.045 trained to ~97.7% in 5 epochs 
+        100 batchsize 3, learning rate 0.05 trained to 97%
+        150 4 0.04 passed (5 minutes)
+        10
+        """
+        self.w0 = nn.Parameter(784, 150)
+        self.b0 = nn.Parameter(1, 150)
+        self.w1 = nn.Parameter(150,10)
+        self.b1 = nn.Parameter(1,10)
+        self.batch_size = 4
+        self.learning_rate = -0.03
 
     def run(self, x):
         """
@@ -174,7 +188,12 @@ class DigitClassificationModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
-
+        l1 = nn.Linear(x, self.w0)
+        l1b = nn.AddBias(l1, self.b0)
+        r1 = nn.ReLU(l1b)
+        l2 = nn.Linear(r1, self.w1)
+        l2b = nn.AddBias(l2, self.b1)
+        return l2b
     def get_loss(self, x, y):
         """
         Computes the loss for a batch of examples.
@@ -189,13 +208,29 @@ class DigitClassificationModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        y_pred = self.run(x)
+        return nn.SoftmaxLoss(y_pred,y)
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
-
+        loop = True
+        while loop:
+            for x, y in dataset.iterate_once(self.batch_size):
+                loss = self.get_loss(x, y)
+                grad_wrt_w0, grad_wrt_b0, grad_wrt_w1, grad_wrt_b1 = nn.gradients(loss, [self.w0, self.b0, self.w1, self.b1])
+                self.w0.update(grad_wrt_w0, self.learning_rate)
+                self.b0.update(grad_wrt_b0, self.learning_rate)
+                self.w1.update(grad_wrt_w1, self.learning_rate)
+                self.b1.update(grad_wrt_b1, self.learning_rate)
+            
+            #loss = self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y))
+            if (dataset.get_validation_accuracy() >= 0.97):
+                loop = False
+        
+        return
 class LanguageIDModel(object):
     """
     A model for language identification at a single-word granularity.
