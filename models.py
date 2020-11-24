@@ -56,6 +56,7 @@ class PerceptronModel(object):
                     nn.Parameter.update(self.get_weights(),x,y)
             if error == False:
                 break
+
 class RegressionModel(object):
     """
     A neural network model for approximating a function that maps from real
@@ -103,7 +104,7 @@ class RegressionModel(object):
         l2 = nn.Linear(r1, self.w1)
         l2b = nn.AddBias(l2, self.b1)
         return l2b
-        
+
     def get_loss(self, x, y):
         """
         Computes the loss for a batch of examples.
@@ -119,6 +120,7 @@ class RegressionModel(object):
         #compute loss nn.squareloss
         y_pred = self.run(x)
         return nn.SquareLoss(y_pred,y)
+
     def train(self, dataset):
         """
         Trains the model.
@@ -141,6 +143,7 @@ class RegressionModel(object):
             loss = self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y))
             if (nn.as_scalar(loss) < 0.02):
                 break
+
 class DigitClassificationModel(object):
     """
     A model for handwritten digit classification using the MNIST dataset.
@@ -194,6 +197,7 @@ class DigitClassificationModel(object):
         l2 = nn.Linear(r1, self.w1)
         l2b = nn.AddBias(l2, self.b1)
         return l2b
+
     def get_loss(self, x, y):
         """
         Computes the loss for a batch of examples.
@@ -247,6 +251,7 @@ class LanguageIDModel(object):
         self.languages = ["English", "Spanish", "Finnish", "Dutch", "Polish"]
 
         # Initialize your model parameters here
+        "*** YOUR CODE HERE ***"
         """
         tried 50 50 50, batch 3, lr 0.05 obtained: 70% fail
         tried 200 200 200 batch 3 lr 0.05 obtained: inf fail
@@ -261,12 +266,16 @@ class LanguageIDModel(object):
         tried 200 200 200 batch 3 lr 0.0025 obtained ~81
         tried 50 50 50 batch 2 lr 0.001 obtained 82
         tried 75 75 75 batch 1 0.0015 obtained 80
+
+        Tried 100, 100, 100 batch 1 lr 0.01 Passed 83 4 minutes
+        Tried 64 64 64 batch 4 0.01 slow
+        Tried 64 64 64 batch 2 lr 0.015 passed 84, 2 minutes
         """
-        self.w_initial = nn.Parameter(self.num_chars, 100)
-        self.w_hidden = nn.Parameter(100,100)
-        self.w_final = nn.Parameter(100, len(self.languages))
-        self.batch_size = 1
-        self.learning_rate = -0.01
+        self.w_initial = nn.Parameter(self.num_chars, 64)
+        self.w_hidden = nn.Parameter(64,64)
+        self.w_final = nn.Parameter(64, len(self.languages))
+        self.batch_size = 2
+        self.learning_rate = -0.015
 
     def run(self, xs):
         """
@@ -299,10 +308,10 @@ class LanguageIDModel(object):
         """
         "*** YOUR CODE HERE ***"
         h = nn.Linear(xs[0],self.w_initial)
-        z = h
+        z = nn.ReLU(h)
         for i in range(1,len(xs)):
             z = nn.Add(nn.Linear(xs[i], self.w_initial), nn.Linear(z, self.w_hidden))
-        
+            z = nn.ReLU(z)
         return nn.Linear(z, self.w_final)
 
     def get_loss(self, xs, y):
