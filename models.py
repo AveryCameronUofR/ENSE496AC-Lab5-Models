@@ -229,8 +229,7 @@ class DigitClassificationModel(object):
             #loss = self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y))
             if (dataset.get_validation_accuracy() >= 0.97):
                 loop = False
-        
-        return
+
 class LanguageIDModel(object):
     """
     A model for language identification at a single-word granularity.
@@ -248,7 +247,6 @@ class LanguageIDModel(object):
         self.languages = ["English", "Spanish", "Finnish", "Dutch", "Polish"]
 
         # Initialize your model parameters here
-        "*** YOUR CODE HERE ***"
         """
         tried 50 50 50, batch 3, lr 0.05 obtained: 70% fail
         tried 200 200 200 batch 3 lr 0.05 obtained: inf fail
@@ -259,12 +257,16 @@ class LanguageIDModel(object):
         tried 400 400 400 batch 5 lr 0.05 jumped around
         tried 400 400 400 batch 5 lr 0.03 obtained ~ 77
         tried 300 300 300 batch 2 lr 0.01 obtained 77 
+        tried 200 200 200 batch 2 lr 0.0025 obtained ~81
+        tried 200 200 200 batch 3 lr 0.0025 obtained ~81
+        tried 50 50 50 batch 2 lr 0.001 obtained 82
+        tried 75 75 75 batch 1 0.0015 obtained 80
         """
-        self.w_initial = nn.Parameter(self.num_chars, 200)
-        self.w_hidden = nn.Parameter(200,200)
-        self.w_final = nn.Parameter(200, len(self.languages))
-        self.batch_size = 2
-        self.learning_rate = -0.0025
+        self.w_initial = nn.Parameter(self.num_chars, 100)
+        self.w_hidden = nn.Parameter(100,100)
+        self.w_final = nn.Parameter(100, len(self.languages))
+        self.batch_size = 1
+        self.learning_rate = -0.01
 
     def run(self, xs):
         """
@@ -296,16 +298,12 @@ class LanguageIDModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
-        z = None
-        for x in xs:
-            if (z == None):
-                z = nn.Linear(x, self.w_initial)
-            else:
-                #z = nn.Add(nn.Linear(x, W), nn.Linear(h,W_hidden)) 
-                #h is the former z
-                z = nn.Add(nn.Linear(x, self.w_initial), nn.Linear(z,self.w_hidden))
-        z = nn.Linear(z, self.w_final)
-        return z
+        h = nn.Linear(xs[0],self.w_initial)
+        z = h
+        for i in range(1,len(xs)):
+            z = nn.Add(nn.Linear(xs[i], self.w_initial), nn.Linear(z, self.w_hidden))
+        
+        return nn.Linear(z, self.w_final)
 
     def get_loss(self, xs, y):
         """
@@ -330,12 +328,16 @@ class LanguageIDModel(object):
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
-        while True:
+        import datetime
+        print(datetime.datetime.now())
+        loop = True
+        while loop:
             for x, y in dataset.iterate_once(self.batch_size):
                 loss = self.get_loss(x, y)
                 grad_wrt_wi, grad_wrt_wh, grad_wrt_wf = nn.gradients(loss, [self.w_initial, self.w_hidden, self.w_final])
                 self.w_initial.update(grad_wrt_wi, self.learning_rate)
                 self.w_hidden.update(grad_wrt_wh, self.learning_rate)
                 self.w_final.update(grad_wrt_wf, self.learning_rate)
-            if (dataset.get_validation_accuracy() > 0.86):
-                return
+            if (dataset.get_validation_accuracy() > 0.85):
+                loop = False
+        print(datetime.datetime.now())
