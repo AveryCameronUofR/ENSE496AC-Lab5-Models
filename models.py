@@ -231,7 +231,7 @@ class DigitClassificationModel(object):
                 self.b1.update(grad_wrt_b1, self.learning_rate)
             
             #loss = self.get_loss(nn.Constant(dataset.x), nn.Constant(dataset.y))
-            if (dataset.get_validation_accuracy() >= 0.97):
+            if (dataset.get_validation_accuracy() >= 0.9725):
                 loop = False
 
 class LanguageIDModel(object):
@@ -347,6 +347,6 @@ class LanguageIDModel(object):
                 self.w_initial.update(grad_wrt_wi, self.learning_rate)
                 self.w_hidden.update(grad_wrt_wh, self.learning_rate)
                 self.w_final.update(grad_wrt_wf, self.learning_rate)
-            if (dataset.get_validation_accuracy() > 0.85):
+            if (dataset.get_validation_accuracy() > 0.865):
                 loop = False
         print(datetime.datetime.now())
